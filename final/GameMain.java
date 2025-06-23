@@ -21,16 +21,16 @@ public class GameMain extends JPanel {
     public static int ROWS = 3;
     public static int COLS = 3;
 
-    public void setPlayerNames(String x, String o) {
-        this.playerX = x;
-        this.playerO = o;
-    }
+    private boolean blitzMode = false;
+    private int timeX = 30;
+    private int timeO = 30;
+    private Timer blitzTimer;
 
-    public static void launchGame(String nameX, String nameO) {
+    public static void launchGame(String nameX, String nameO, boolean isBlitz) {
         SwingUtilities.invokeLater(() -> {
             SoundEffect.init();
             JFrame frame = new JFrame(TITLE);
-            GameMain panel = new GameMain();
+            GameMain panel = new GameMain(isBlitz);
             panel.setPlayerNames(nameX, nameO);
             frame.setContentPane(panel);
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -40,7 +40,9 @@ public class GameMain extends JPanel {
         });
     }
 
-    public GameMain() {
+    public GameMain(boolean isBlitz) {
+        this.blitzMode = isBlitz;
+
         int width = Cell.SIZE * COLS;
         int height = Cell.SIZE * ROWS + 30;
         setPreferredSize(new Dimension(width, height));
@@ -97,14 +99,20 @@ public class GameMain extends JPanel {
                             currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
                         } else {
                             SoundEffect.DIE.play();
+                            if (blitzTimer != null) blitzTimer.stop();
                         }
+                        repaint();
                     }
                 }
-                repaint();
             }
         });
 
         newGame();
+    }
+
+    public void setPlayerNames(String x, String o) {
+        this.playerX = x;
+        this.playerO = o;
     }
 
     public void newGame() {
@@ -113,6 +121,35 @@ public class GameMain extends JPanel {
         currentState = State.PLAYING;
         restartButton.setVisible(false);
         backToMenuButton.setVisible(false);
+        timeX = 30;
+        timeO = 30;
+
+        if (blitzMode) {
+            if (blitzTimer != null) blitzTimer.stop();
+            blitzTimer = new Timer(1000, e -> {
+                if (currentState != State.PLAYING) {
+                    blitzTimer.stop();
+                    return;
+                }
+                if (currentPlayer == Seed.CROSS) {
+                    timeX--;
+                    if (timeX <= 0) {
+                        currentState = State.NOUGHT_WON;
+                        SoundEffect.DIE.play();
+                        blitzTimer.stop();
+                    }
+                } else {
+                    timeO--;
+                    if (timeO <= 0) {
+                        currentState = State.CROSS_WON;
+                        SoundEffect.DIE.play();
+                        blitzTimer.stop();
+                    }
+                }
+                repaint();
+            });
+            blitzTimer.start();
+        }
     }
 
     protected void paintComponent(Graphics g) {
@@ -121,9 +158,8 @@ public class GameMain extends JPanel {
 
         if (currentState == State.PLAYING) {
             String currentName = (currentPlayer == Seed.CROSS) ? playerX : playerO;
-            statusBar.setText(currentName + "'s Turn (" + (currentPlayer == Seed.CROSS ? "X" : "O") + ")");
-            restartButton.setVisible(false);
-            backToMenuButton.setVisible(false);
+            String timerText = blitzMode ? " | Time - " + playerX + ": " + timeX + "s, " + playerO + ": " + timeO + "s" : "";
+            statusBar.setText(currentName + "'s Turn (" + currentPlayer.getDisplay() + ")" + timerText);
         } else if (currentState == State.CROSS_WON) {
             statusBar.setText(playerX + " (X) won!");
             ScoreManager.addWin(playerX);
@@ -139,17 +175,5 @@ public class GameMain extends JPanel {
             restartButton.setVisible(true);
             backToMenuButton.setVisible(true);
         }
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            SoundEffect.init();
-            JFrame frame = new JFrame(TITLE);
-            frame.setContentPane(new GameMain());
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.pack();
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-        });
     }
 }

@@ -9,7 +9,7 @@ This is the final version of the Tic-Tac-Toe game with:
 
 ## ✅ How to Compile and Run
 
-Open a terminal in this folder (`step5/`) and run:
+Open a terminal in this folder (`final/`) and run:
 
 ```bash
 chmod +x run.sh
