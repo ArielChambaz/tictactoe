@@ -13,6 +13,29 @@ public class GameMain extends JPanel {
     private Seed currentPlayer;
     private JLabel statusBar;
     private JButton restartButton;
+    private JButton backToMenuButton;
+
+    private String playerX = "Player X";
+    private String playerO = "Player O";
+
+    public void setPlayerNames(String x, String o) {
+        this.playerX = x;
+        this.playerO = o;
+    }
+
+    public static void launchGame(String nameX, String nameO) {
+        SwingUtilities.invokeLater(() -> {
+            SoundEffect.init();
+            JFrame frame = new JFrame(TITLE);
+            GameMain panel = new GameMain();
+            panel.setPlayerNames(nameX, nameO);
+            frame.setContentPane(panel);
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.pack();
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
+        });
+    }
 
     public GameMain() {
         setLayout(new BorderLayout());
@@ -21,7 +44,7 @@ public class GameMain extends JPanel {
 
         board = new Board();
 
-        // Bottom panel with status and restart button
+        // Bottom panel with status and buttons
         JPanel bottomPanel = new JPanel(new BorderLayout());
 
         statusBar = new JLabel(" ");
@@ -38,8 +61,23 @@ public class GameMain extends JPanel {
             repaint();
         });
 
+        backToMenuButton = new JButton("Back to Menu");
+        backToMenuButton.setFont(FONT_STATUS);
+        backToMenuButton.setVisible(false);
+        backToMenuButton.addActionListener(e -> {
+            Window window = SwingUtilities.getWindowAncestor(this);
+            if (window != null) {
+                window.dispose();
+                new MainMenu();
+            }
+        });
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.add(restartButton);
+        buttonPanel.add(backToMenuButton);
+
         bottomPanel.add(statusBar, BorderLayout.CENTER);
-        bottomPanel.add(restartButton, BorderLayout.EAST);
+        bottomPanel.add(buttonPanel, BorderLayout.EAST);
         bottomPanel.setPreferredSize(new Dimension(Board.WIDTH, 30));
         add(bottomPanel, BorderLayout.SOUTH);
 
@@ -70,6 +108,7 @@ public class GameMain extends JPanel {
         currentPlayer = Seed.CROSS;
         currentState = State.PLAYING;
         restartButton.setVisible(false);
+        backToMenuButton.setVisible(false);
     }
 
     protected void paintComponent(Graphics g) {
@@ -77,17 +116,24 @@ public class GameMain extends JPanel {
         board.paint(g);
 
         if (currentState == State.PLAYING) {
-            statusBar.setText((currentPlayer == Seed.CROSS ? "X's Turn" : "O's Turn"));
+            String currentName = (currentPlayer == Seed.CROSS) ? playerX : playerO;
+            statusBar.setText(currentName + "'s Turn (" + (currentPlayer == Seed.CROSS ? "X" : "O") + ")");
             restartButton.setVisible(false);
+            backToMenuButton.setVisible(false);
         } else if (currentState == State.CROSS_WON) {
-            statusBar.setText("X Won!");
+            statusBar.setText(playerX + " (X) won!");
+            ScoreManager.addWin(playerX);
             restartButton.setVisible(true);
+            backToMenuButton.setVisible(true);
         } else if (currentState == State.NOUGHT_WON) {
-            statusBar.setText("O Won!");
+            statusBar.setText(playerO + " (O) won!");
+            ScoreManager.addWin(playerO);
             restartButton.setVisible(true);
+            backToMenuButton.setVisible(true);
         } else {
             statusBar.setText("Draw!");
             restartButton.setVisible(true);
+            backToMenuButton.setVisible(true);
         }
     }
 
