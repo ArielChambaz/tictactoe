@@ -18,6 +18,9 @@ public class GameMain extends JPanel {
     private String playerX = "Player X";
     private String playerO = "Player O";
 
+    public static int ROWS = 3;
+    public static int COLS = 3;
+
     public void setPlayerNames(String x, String o) {
         this.playerX = x;
         this.playerO = o;
@@ -38,13 +41,14 @@ public class GameMain extends JPanel {
     }
 
     public GameMain() {
+        int width = Cell.SIZE * COLS;
+        int height = Cell.SIZE * ROWS + 30;
+        setPreferredSize(new Dimension(width, height));
         setLayout(new BorderLayout());
-        setPreferredSize(new Dimension(Board.WIDTH, Board.HEIGHT + 30));
         setBackground(COLOR_BG);
 
-        board = new Board();
+        board = new Board(GameMain.ROWS, GameMain.COLS);
 
-        // Bottom panel with status and buttons
         JPanel bottomPanel = new JPanel(new BorderLayout());
 
         statusBar = new JLabel(" ");
@@ -78,7 +82,7 @@ public class GameMain extends JPanel {
 
         bottomPanel.add(statusBar, BorderLayout.CENTER);
         bottomPanel.add(buttonPanel, BorderLayout.EAST);
-        bottomPanel.setPreferredSize(new Dimension(Board.WIDTH, 30));
+        bottomPanel.setPreferredSize(new Dimension(width, 30));
         add(bottomPanel, BorderLayout.SOUTH);
 
         addMouseListener(new MouseAdapter() {
